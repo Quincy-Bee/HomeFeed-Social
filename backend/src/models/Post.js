@@ -1,0 +1,3 @@
+import mongoose from 'mongoose';
+const schema=new mongoose.Schema({author:{type:mongoose.Schema.Types.ObjectId,ref:'User',required:true,index:true},caption:{type:String,required:true,trim:true,maxlength:3000},media:[{url:{type:String,required:true},type:{type:String,enum:['image','video'],default:'image'},alt:{type:String,maxlength:300}}],location:{label:{type:String,trim:true,maxlength:160},placeId:String,latitude:Number,longitude:Number},taggedUsers:[{type:mongoose.Schema.Types.ObjectId,ref:'User'}],likes:[{type:mongoose.Schema.Types.ObjectId,ref:'User'}],visibility:{type:String,enum:['public','followers'],default:'public'}},{timestamps:true});
+schema.index({createdAt:-1}); export default mongoose.model('Post',schema);
