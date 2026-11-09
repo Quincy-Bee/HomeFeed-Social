@@ -1,26 +1,322 @@
-import { useState } from 'react';
-import { Routes, Route, NavLink, Link, useNavigate, useParams } from 'react-router-dom';
-import { Home, Compass, PlusSquare, Bell, MessageCircle, UserRound, Search, Menu, X, Heart, MessageSquare, Send, Bookmark, MapPin, MoreHorizontal } from 'lucide-react';
 
-const API = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
-const people = [
-  { id:'u1', name:'Maya Chen', username:'mayachen', role:'Real estate agent', avatar:'https://i.pravatar.cc/100?img=47' },
-  { id:'u2', name:'Jordan Ellis', username:'jordanellis', role:'Home enthusiast', avatar:'https://i.pravatar.cc/100?img=12' },
-  { id:'u3', name:'Alex Rivera', username:'alexrivera', role:'Real estate agent', avatar:'https://i.pravatar.cc/100?img=11' }
-];
+import { useState } from 'react'
+import './App.css'
+
 const initialPosts = [
-  { id:'1', author:people[0], time:'2h', caption:'A little natural light goes a long way. Love the original oak floors and the quiet corner this place has become. What detail makes a home feel special to you? #interiors #brooklyn', location:'Brooklyn, NY', image:'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=1200&q=85', likes:128, comments:18 },
-  { id:'2', author:people[1], time:'4h', caption:'Weekend walk through the neighborhood. Coffee, tree-lined streets, and a few beautiful brownstones. Saving this block for future inspiration.', location:'Providence, RI', image:'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1200&q=85', likes:86, comments:9 },
-  { id:'3', author:people[2], time:'Yesterday', caption:'The best part of this renovation was keeping the character while making the kitchen work for real life. Custom cabinetry, warm stone, and room to gather.', location:'Cambridge, MA', image:'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=1200&q=85', likes:204, comments:31 }
-];
-function Shell({children}) { const [open,setOpen]=useState(false); const nav=[[Home,'Feed','/'],[Compass,'Explore','/explore'],[PlusSquare,'Create','/create'],[Bell,'Notifications','/notifications'],[MessageCircle,'Messages','/messages']]; return <div className="layout"><aside className={`sidebar ${open?'show':''}`}><Link className="brand" to="/"><span className="brand-icon">H</span>homefeed <em>social</em></Link><p className="side-caption">YOUR SPACE</p><nav>{nav.map(([I,t,p])=><NavLink end={p==='/'} to={p} key={p} onClick={()=>setOpen(false)}><I size={19}/>{t}</NavLink>)}</nav><div className="side-profile"><img src={people[0].avatar}/><div><b>Maya Chen</b><small>@mayachen</small></div></div></aside><main className="main"><header className="mobilebar"><button onClick={()=>setOpen(!open)}>{open?<X/>:<Menu/>}</button><Link className="brand" to="/">homefeed <em>social</em></Link><img src={people[0].avatar}/></header>{children}</main><aside className="right"><div className="search"><Search size={17}/><input placeholder="Search people, places..."/></div><section className="rail"><div className="rail-title">People to follow <Link to="/explore">See all</Link></div>{people.slice(1).map(p=><div className="suggestion" key={p.id}><img src={p.avatar}/><div><b>{p.name}</b><small>@{p.username}</small></div><button>Follow</button></div>)}</section><section className="rail"><div className="rail-title">Popular places</div>{['Brooklyn, NY','Providence, RI','Cambridge, MA'].map((p,i)=><div className="place" key={p}><small>0{i+1} · LOCATION</small><b>{p}</b></div>)}</section><footer>About · Guidelines · Privacy · Terms<br/>© 2026 HomeFeed Social</footer></aside></div> }
-function Post({post}) { const [liked,setLiked]=useState(false),[count,setCount]=useState(post.likes); return <article className="post"><div className="post-head"><img src={post.author.avatar}/><div><b>{post.author.name}</b><small>@{post.author.username} · {post.time}</small></div><button className="more"><MoreHorizontal/></button></div><p className="caption">{post.caption}</p>{post.location&&<div className="location"><MapPin size={14}/>{post.location}</div>}{post.image&&<img className="post-photo" src={post.image} alt="Home and interior inspiration"/>}<div className="stats"><span>{count} likes</span><span>{post.comments} comments</span></div><div className="actions"><button className={liked?'liked':''} onClick={()=>{setLiked(!liked);setCount(count+(liked?-1:1))}}><Heart size={19}/>Like</button><button><MessageSquare size={18}/>Comment</button><button><Send size={18}/>Share</button><button className="save"><Bookmark size={18}/>Save</button></div></article> }
-function Heading({eyebrow,title,desc,action}) {return <div className="page-heading"><div><small>{eyebrow}</small><h1>{title}</h1><p>{desc}</p></div>{action}</div>}
-function Feed(){return <div className="column"><Heading eyebrow="A PLACE FOR HOMES & THE PEOPLE AROUND THEM" title="Your feed" desc="Discover spaces, neighborhoods, and stories from your community." action={<Link className="primary" to="/create">＋ Create post</Link>}/><div className="tabs"><button className="active">For you</button><button>Following</button></div><div className="stories">{people.map(p=><div key={p.id}><span><img src={p.avatar}/></span><small>{p.username}</small></div>)}</div>{initialPosts.map(p=><Post post={p} key={p.id}/>)}</div>}
-function Explore(){return <div className="column"><Heading eyebrow="FIND YOUR NEXT INSPIRATION" title="Explore" desc="Discover people, posts, and places worth knowing."/><div className="search explore-search"><Search size={17}/><input placeholder="Search posts, people, or locations"/></div><div className="chips">{['For you','Interiors','Architecture','Neighborhoods','Renovations'].map((x,i)=><button className={i===0?'chosen':''} key={x}>{x}</button>)}</div><div className="explore-grid">{initialPosts.map((p,i)=><Link to="/" key={p.id}><img src={p.image}/><b>{['Spaces with soul','Neighborhood notes','Thoughtful renovations'][i]}</b><small>{p.location}</small></Link>)}</div></div>}
-function Create(){const [caption,setCaption]=useState(''),[media,setMedia]=useState(''),[location,setLocation]=useState(''),[tagged,setTagged]=useState(''),[notice,setNotice]=useState('');return <div className="column"><Heading eyebrow="SHARE WITH YOUR COMMUNITY" title="Create a post" desc="Share a space, a place, or an idea worth passing along."/><form className="create" onSubmit={async e=>{e.preventDefault();const token=localStorage.getItem('hf-social-token');if(!token){setNotice('Sign in to publish. Your draft details are still here.');return;}try{const res=await fetch(`${API}/posts`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},body:JSON.stringify({caption,media:media?[{url:media,type:'image'}]:[],location:location?{label:location}:undefined,taggedUsers:tagged.split(',').map(x=>x.trim()).filter(Boolean)})});const data=await res.json();if(!res.ok)throw Error(data.message);setNotice('Post published.');}catch(err){setNotice(err.message)}}}><div className="composer-user"><img src={people[0].avatar}/><div><b>Maya Chen</b><small>Sharing with the community</small></div></div><label>What's on your mind?<textarea rows="5" required value={caption} onChange={e=>setCaption(e.target.value)} placeholder="Tell the story behind this space... Property details can go right in your caption."/></label><label>Photo or video URL <input value={media} onChange={e=>setMedia(e.target.value)} placeholder="https://..."/></label><label>Tag a location <input value={location} onChange={e=>setLocation(e.target.value)} placeholder="Neighborhood, city, or place"/></label><label>Tag people <input value={tagged} onChange={e=>setTagged(e.target.value)} placeholder="User IDs separated by commas (mention search coming soon)"/></label><p className="helper">Location and people tags are optional. Posts do not need to be linked to a property listing.</p><button className="primary" type="submit">Publish post</button>{notice&&<p className="notice">{notice}</p>}</form></div>}
-function Notifications(){return <div className="column"><Heading eyebrow="WHAT'S HAPPENING" title="Notifications" desc="Your latest activity and mentions."/><div className="empty"><span>♡</span><h3>You're all caught up</h3><p>Likes, comments, and tags will appear here when notifications are connected.</p></div></div>}
-function Messages(){return <div className="column"><Heading eyebrow="CONVERSATIONS" title="Messages" desc="Connect with people in your HomeFeed community."/><div className="empty"><span>✉</span><h3>Your conversations start here</h3><p>Direct messaging is planned for a later phase.</p></div></div>}
-function Profile(){const {username}=useParams();const person=people.find(p=>p.username===username)||people[0];return <div className="column"><div className="cover"/><section className="profile"><img src={person.avatar}/><button className="outline">Edit profile</button><h1>{person.name}</h1><small>@{person.username} · {person.role}</small><p>Sharing homes, details, and neighborhood finds. Helping people find a place that feels like theirs.</p><div className="profile-stats"><b>24 <small>posts</small></b><b>1.2k <small>followers</small></b><b>386 <small>following</small></b></div></section><div className="tabs"><button className="active">Posts</button><button>Saved</button></div>{initialPosts.filter(p=>p.author.username===person.username).map(p=><Post key={p.id} post={p}/>)}</div>}
-function Auth({signup=false}){const [name,setName]=useState(''),[username,setUsername]=useState(''),[email,setEmail]=useState(''),[password,setPassword]=useState(''),[error,setError]=useState('');const nav=useNavigate();return <div className="auth"><Link className="brand" to="/">homefeed <em>social</em></Link><small>{signup?'JOIN THE COMMUNITY':'WELCOME BACK'}</small><h1>{signup?'Create your account':'Sign in'}</h1><p>A social space for homes and the people around them.</p><form onSubmit={async e=>{e.preventDefault();setError('');try{const r=await fetch(`${API}/auth/${signup?'register':'login'}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(signup?{name,username,email,password}:{email,password})});const d=await r.json();if(!r.ok)throw Error(d.message);localStorage.setItem('hf-social-token',d.token);nav('/');}catch(err){setError(err.message)}}}>{signup&&<><label>Name<input required value={name} onChange={e=>setName(e.target.value)}/></label><label>Username<input required pattern="[A-Za-z0-9_]{3,24}" value={username} onChange={e=>setUsername(e.target.value)} placeholder="3–24 letters, numbers, underscores"/></label></>}<label>Email<input type="email" required value={email} onChange={e=>setEmail(e.target.value)}/></label><label>Password<input type="password" minLength="10" required value={password} onChange={e=>setPassword(e.target.value)}/></label><button className="primary">{signup?'Create account':'Sign in'}</button>{error&&<p className="notice">{error}</p>}</form><p>{signup?'Already have an account? ':'New here? '}<Link to={signup?'/login':'/signup'}>{signup?'Sign in':'Create an account'}</Link></p></div>}
-export default function App(){return <Routes><Route path="/login" element={<Auth/>}/><Route path="/signup" element={<Auth signup/>}/><Route path="*" element={<Shell><Routes><Route path="/" element={<Feed/>}/><Route path="/explore" element={<Explore/>}/><Route path="/create" element={<Create/>}/><Route path="/notifications" element={<Notifications/>}/><Route path="/messages" element={<Messages/>}/><Route path="/profile/:username" element={<Profile/>}/></Routes></Shell>}/></Routes>}
+  {
+    id: 1,
+    name: 'Sarah Mitchell',
+    username: 'sarahmitchell',
+    role: 'Real Estate Agent',
+    initials: 'SM',
+    location: 'Brooklyn Heights, Brooklyn',
+    time: '2 hours ago',
+    image: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200',
+    caption: 'Just listed in Brooklyn Heights! Beautiful natural light, elegant details, and a private outdoor space just minutes from the waterfront.',
+    likes: 128,
+    comments: 18,
+  },
+  {
+    id: 2,
+    name: 'James Cooper',
+    username: 'jamescooper',
+    role: 'Home Enthusiast',
+    initials: 'JC',
+    location: 'Upper West Side, Manhattan',
+    time: '5 hours ago',
+    image: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1200',
+    caption: 'Apartment inspiration from Manhattan. Warm wood, clean lines, and natural light make this space feel like home.',
+    likes: 86,
+    comments: 12,
+  },
+  {
+    id: 3,
+    name: 'Olivia Bennett',
+    username: 'oliviabennett',
+    role: 'Real Estate Agent',
+    initials: 'OB',
+    location: 'Astoria, Queens',
+    time: 'Yesterday',
+    image: 'https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?w=1200',
+    caption: 'A little NYC design inspiration. Great spaces are about more than square footage. They are about how a home makes you feel.',
+    likes: 204,
+    comments: 26,
+  },
+]
+
+const people = [
+  ['SM', 'Sarah Mitchell', 'Brooklyn Agent'],
+  ['JC', 'James Cooper', 'NYC Home Enthusiast'],
+  ['OB', 'Olivia Bennett', 'Queens Agent'],
+]
+
+function App() {
+  const [posts, setPosts] = useState(initialPosts)
+  const [activeNav, setActiveNav] = useState('Home')
+  const [caption, setCaption] = useState('')
+  const [location, setLocation] = useState('')
+  const [showComposer, setShowComposer] = useState(false)
+  const [likedPosts, setLikedPosts] = useState([])
+
+  const toggleLike = (id) => {
+    setLikedPosts((current) =>
+      current.includes(id)
+        ? current.filter((postId) => postId !== id)
+        : [...current, id]
+    )
+  }
+
+  const createPost = (event) => {
+    event.preventDefault()
+    if (!caption.trim()) return
+
+    const newPost = {
+      id: Date.now(),
+      name: 'Your Name',
+      username: 'yourprofile',
+      role: 'HomeFeed Member',
+      initials: 'YN',
+      location: location.trim() || 'New York, NY',
+      time: 'Just now',
+      image: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1200',
+      caption: caption.trim(),
+      likes: 0,
+      comments: 0,
+    }
+
+    setPosts((current) => [newPost, ...current])
+    setCaption('')
+    setLocation('')
+    setShowComposer(false)
+    setActiveNav('Home')
+  }
+
+  const navigation = [
+    ['⌂', 'Home'],
+    ['⌕', 'Explore'],
+    ['＋', 'Create Post'],
+    ['♡', 'Notifications'],
+    ['✉', 'Messages'],
+    ['◎', 'My Profile'],
+  ]
+
+  return (
+    <div className="social-app">
+      <header className="topbar">
+        <a className="brand" href="/">
+          <span className="brand-icon">H</span>
+          <span>HomeFeed <span className="brand-light">Social</span></span>
+        </a>
+
+        <div className="search-box">
+          <span>⌕</span>
+          <input placeholder="Search people, homes, neighborhoods..." />
+        </div>
+
+        <div className="top-actions">
+          <button className="icon-button" onClick={() => setActiveNav('Notifications')}>♡</button>
+          <button className="icon-button" onClick={() => setActiveNav('Messages')}>✉</button>
+          <div className="profile-avatar">YN</div>
+        </div>
+      </header>
+
+      <div className="main-layout">
+        <aside className="sidebar">
+          <div className="sidebar-profile">
+            <div className="large-avatar">YN</div>
+            <h3>Your Name</h3>
+            <p>@yourprofile</p>
+
+            <div className="profile-stats">
+              <div><strong>{posts.length}</strong><span>Posts</span></div>
+              <div><strong>0</strong><span>Followers</span></div>
+              <div><strong>0</strong><span>Following</span></div>
+            </div>
+          </div>
+
+          <nav className="navigation">
+            {navigation.map(([icon, label]) => (
+              <button
+                key={label}
+                className={activeNav === label ? 'nav-item active' : 'nav-item'}
+                onClick={() => {
+                  setActiveNav(label)
+                  if (label === 'Create Post') setShowComposer(true)
+                }}
+              >
+                <span className="nav-icon">{icon}</span>
+                {label}
+              </button>
+            ))}
+          </nav>
+
+          <div className="sidebar-bottom">
+            <p>HOMEFEED SOCIAL</p>
+            <span>Discover New York homes. Share inspiration. Connect.</span>
+          </div>
+        </aside>
+
+        <main className="feed-area">
+          <div className="feed-heading">
+            <div>
+              <span className="eyebrow">THE NEW YORK REAL ESTATE COMMUNITY</span>
+              <h1>{activeNav === 'Explore' ? 'Explore New York' : 'Your Feed'}</h1>
+              <p>Homes, neighborhoods, and people shaping NYC real estate.</p>
+            </div>
+
+            <button
+              className="primary-button"
+              onClick={() => setShowComposer(true)}
+            >
+              ＋ Create Post
+            </button>
+          </div>
+
+          <section className="stories">
+            <div className="story">
+              <div className="story-ring add-story">＋</div>
+              <span>Your Story</span>
+            </div>
+
+            {people.map(([initials, name]) => (
+              <div className="story" key={name}>
+                <div className="story-ring"><div>{initials}</div></div>
+                <span>{name.split(' ')[0]}</span>
+              </div>
+            ))}
+          </section>
+
+          {showComposer && (
+            <form className="composer" onSubmit={createPost}>
+              <div className="composer-heading">
+                <h2>Create a post</h2>
+                <button type="button" onClick={() => setShowComposer(false)}>✕</button>
+              </div>
+
+              <textarea
+                value={caption}
+                onChange={(event) => setCaption(event.target.value)}
+                placeholder="Share a listing, neighborhood find, design idea, or NYC real estate insight..."
+                rows={4}
+              />
+
+              <input
+                value={location}
+                onChange={(event) => setLocation(event.target.value)}
+                placeholder="Add a New York location (optional)"
+              />
+
+              <div className="composer-footer">
+                <span>⌖ Add a neighborhood or location</span>
+                <button className="primary-button" type="submit">
+                  Publish Post
+                </button>
+              </div>
+            </form>
+          )}
+
+          <div className="feed-tabs">
+            <button className="selected" onClick={() => setActiveNav('Home')}>For You</button>
+            <button onClick={() => setActiveNav('Explore')}>Discover</button>
+            <button onClick={() => setActiveNav('Home')}>Following</button>
+          </div>
+
+          {posts.map((post) => (
+            <article className="post-card" key={post.id}>
+              <div className="post-header">
+                <div className="post-avatar">{post.initials}</div>
+
+                <div className="post-user">
+                  <strong>{post.name}</strong>
+                  <span>{post.role} · {post.time}</span>
+                </div>
+
+                <button className="more-button">···</button>
+              </div>
+
+              <p className="post-location">⌖ {post.location}</p>
+              <p className="post-caption">{post.caption}</p>
+
+              <img
+                className="post-image"
+                src={post.image}
+                alt="Real estate and home inspiration"
+              />
+
+              <div className="post-actions">
+                <button
+                  className={likedPosts.includes(post.id) ? 'liked' : ''}
+                  onClick={() => toggleLike(post.id)}
+                >
+                  {likedPosts.includes(post.id) ? '♥' : '♡'}
+                  {' '}{post.likes + (likedPosts.includes(post.id) ? 1 : 0)}
+                </button>
+
+                <button>▢ {post.comments} Comments</button>
+                <button>↗ Share</button>
+                <button className="save-button">♧ Save</button>
+              </div>
+            </article>
+          ))}
+        </main>
+
+        <aside className="right-sidebar">
+          <section className="welcome-card">
+            <span className="eyebrow">WELCOME TO HOMEFEED</span>
+            <h2>New York real estate meets social.</h2>
+            <p>
+              Discover homes across the five boroughs, connect with local
+              agents, and share the neighborhoods and spaces that inspire you.
+            </p>
+            <button onClick={() => setShowComposer(true)}>Share something</button>
+          </section>
+
+          <section className="suggestions">
+            <div className="suggestion-heading">
+              <h3>People to discover</h3>
+              <button>See all</button>
+            </div>
+
+            {people.map(([initials, name, role]) => (
+              <div className="suggestion" key={name}>
+                <div className="suggestion-avatar">{initials}</div>
+                <div className="suggestion-info">
+                  <strong>{name}</strong>
+                  <span>{role}</span>
+                </div>
+                <button>＋</button>
+              </div>
+            ))}
+          </section>
+
+          <section className="neighborhoods">
+            <h3>Explore New York</h3>
+            <div className="neighborhood-tags">
+              {[
+                'Manhattan',
+                'Brooklyn',
+                'Queens',
+                'The Bronx',
+                'Staten Island',
+                'Long Island',
+                'Westchester',
+                'Hudson Valley',
+              ].map((area) => (
+                <button key={area} onClick={() => setActiveNav('Explore')}>
+                  {area}
+                </button>
+              ))}
+            </div>
+          </section>
+
+          <div className="right-footer">
+            About · Privacy · Terms · Help
+            <p>© 2026 HomeFeed Social</p>
+          </div>
+        </aside>
+      </div>
+    </div>
+  )
+}
+
+export default App
